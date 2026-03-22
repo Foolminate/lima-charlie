@@ -1,0 +1,50 @@
+# --- Godot Engine ---
+# Ignore the imported assets and other cache files in the .godot folder.
+# Un-ignore specific user configuration files for consistent project setup.
+.godot/
+!.godot/user_settings.tres
+!.godot/user_translation_remaps.tres
+!.godot/project_metadata.cfg
+
+# --- C# / Mono ---
+# Ignore C# build artifacts.
+.mono/
+bin/
+obj/
+*.sln
+*.csproj
+
+# --- Exporting ---
+# Often machine-specificn—remove if collaboration requires it.
+export_presets.cfg
+
+# Ignore exported game files and packages.
+*.pck
+*.zip
+*.exe
+*.dmg
+*.app
+*.apk
+*.aab
+
+# Ignore default export folders.
+/android/
+/builds/
+/ios/
+/linux/
+/macos/
+/windows/
+/web/
+
+# --- Secrets & Credentials ---
+secrets.gd
+.env
+
+# --- IDEs & OS ---
+# Ignore common IDE and OS-specific files.
+.vscode/
+.idea/
+.vs/
+.DS_Store
+Thumbs.db
+*.swp
