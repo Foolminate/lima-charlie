@@ -1,20 +1,44 @@
 [gd_scene format=3 uid="uid://beptnao1bilpv"]
 
-[ext_resource type="Texture2D" uid="uid://c433vvsebvff4" path="res://icon.svg" id="1_goyld"]
+[ext_resource type="Texture2D" uid="uid://bekfpsu2liccj" path="res://assets/sprites/blank-tile.png" id="1_goyld"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qdrqe"]
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_qdrqe"]
+vertices = PackedVector2Array(32, 32, -32, 32, -32, -32, 32, -32)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)])
+agent_radius = 0.0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vq7t1"]
+resource_name = "ground"
 texture = ExtResource("1_goyld")
 texture_region_size = Vector2i(64, 64)
 0:0/0 = 0
-1:0/0 = 0
-0:1/0 = 0
-1:1/0 = 0
+0:0/0/modulate = Color(5.0296635e-06, 0.50067604, 0.15632987, 1)
+0:0/0/navigation_layer_0/polygon = SubResource("NavigationPolygon_qdrqe")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cqx0j"]
+resource_name = "wall"
+texture = ExtResource("1_goyld")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+0:0/0/modulate = Color(0.38422897, 0.38422897, 0.38422894, 1)
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vapv0"]
+resource_name = "crate"
+texture = ExtResource("1_goyld")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+0:0/0/modulate = Color(0.7078021, 0.5177096, 0.23639494, 1)
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
 
 [sub_resource type="TileSet" id="TileSet_vq7t1"]
 tile_size = Vector2i(64, 64)
 physics_layer_0/collision_layer = 1
 navigation_layer_0/layers = 1
-sources/1 = SubResource("TileSetAtlasSource_qdrqe")
+sources/0 = SubResource("TileSetAtlasSource_vq7t1")
+sources/1 = SubResource("TileSetAtlasSource_cqx0j")
+sources/2 = SubResource("TileSetAtlasSource_vapv0")
 
 [node name="TestArena" type="Node2D" unique_id=992496562]
 

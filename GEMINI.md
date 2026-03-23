@@ -25,7 +25,20 @@ The system is built on a strict decoupling of strategic intent and physical exec
 
 ---
 
-## 2. The OODAR Decision Loop
+## 2. The Command Pipeline (Player to Execution)
+This pipeline governs the translation of unpredictable player input into the strict TOON protocol, explicitly designed to mask LLM latency through speculative caching.
+
+1. **Ingestion:** Player issues natural language voice commands via a Push-To-Talk input.
+2. **Transcription & Filtering:** STT (Speech-to-Text) converts audio to string. A lightweight intent parser (Regex or a secondary, fast/small model) strips conversational filler, yielding a compact `PLAYER_INTENT` string (e.g., "Move to [Crates], watch [Doorway]").
+3. **Tactical Orientation:** Godot's Operator layer merges `PLAYER_INTENT` with the active FSM state and local visibility to compile the standard `SITREP` TOON.
+4. **Inference (The Commander):** The primary LLM ingests the `SITREP`, orienting the player's goal against ROE and physical map constraints.
+5. **Execution & Immersion:** The LLM returns the standard TOON string (`CMD`, `EXPECT`, `BARK`). Godot transitions the Operator to `EXECUTING`, while simultaneously routing the `BARK` string to a TTS (Text-to-Speech) engine for real-time auditory confirmation.
+6. **Speculative Contingency (Pre-Cog Loop):** While the physical unit is busy navigating/executing, Godot silently dispatches a background "What-If" prompt to the LLM based on detected but un-triggered environmental data (e.g., "Contingency if enemy spotted at 12_OCLOCK").
+7. **Cache & Sleep:** The LLM returns a contingency TOON. Godot stores this locally on the unit. If the unit's sensors subsequently trigger that exact scenario, the FSM instantly executes the cached TOON—completely bypassing inference latency—and *then* issues a fresh `SITREP` to realign the sleeping Commander.
+
+---
+
+## 3. The OODAR Decision Loop
 Units operate on a formal Observe-Orient-Decide-Act-Reflect loop, but to minimize latency, Reflection is bundled into the next cycle's Observation.
 
 1.  **Observe (Godot):** Engine aggregates squad LOS, Global Blackboard, player input, and calculates the delta between the *previous* command's `EXPECT` and the `ACTUAL` outcome.
@@ -36,7 +49,7 @@ Units operate on a formal Observe-Orient-Decide-Act-Reflect loop, but to minimiz
 
 ---
 
-## 3. Communication Protocol: TOON (Token-Optimized Object Notation)
+## 4. Communication Protocol: TOON (Token-Optimized Object Notation)
 All communication between Commander and Operator uses a delimited shorthand to minimize token cost and latency.
 
 * **SITREP (Inbound to LLM):**
@@ -50,7 +63,7 @@ All communication between Commander and Operator uses a delimited shorthand to m
 
 ---
 
-## 4. The Operator Logic (Finite State Machine)
+## 5. The Operator Logic (Finite State Machine)
 Units are governed by a robust FSM that manages the transition between high-level orders and world-space reality.
 
 * **IDLE:** Stationary, defensive posture, scanning for threats. A new SITREP is generated if the environment changes significantly.
@@ -65,7 +78,7 @@ Units are governed by a robust FSM that manages the transition between high-leve
 
 ---
 
-## 5. Perception, Memory, and Validation
+## 6. Perception, Memory, and Validation
 
 ### A. The Perception Engine
 * **Spatial Mapping:** Translates coordinates into a relative 12-hour clock face based on Global North or Unit Forward.
@@ -82,7 +95,7 @@ Units are governed by a robust FSM that manages the transition between high-leve
 
 ---
 
-## 6. Comprehensive Development Roadmap (Revised for MVP Execution)
+## 7. Comprehensive Development Roadmap (Revised for MVP Execution)
 When working through the implementation, do not move onto the next step until the current step is confirmed complete. Explain the steps in the editor in detail—do not assume deep editor knowledge.
 
 ### Phase 1: Foundation & The Debug Layer
@@ -119,9 +132,18 @@ When working through the implementation, do not move onto the next step until th
 * [ ] **Live Testing:** Point Godot's `HTTPRequest` to the LLM API instead of the mock server.
 * [ ] **Tuning:** Refine the prompt to reduce latency, fix formatting hallucinations, and handle edge cases where the LLM gets "stuck."
 
+### Phase 6: The Command Pipeline (Input & Latency Masking)
+*Goal: Connect the player's voice to the tactical layer and implement speculative contingency caching.*
+* [ ] **Audio Ingestion:** Configure Godot's audio bus to capture microphone input triggered by a Push-To-Talk action.
+* [ ] **STT Integration:** Wire the captured audio buffer to a local or API-based Speech-to-Text service.
+* [ ] **Intent Filter:** Build the parser (regex/keyword extraction or a micro-model) to distill raw transcripts into the `PLAYER_INTENT` format.
+* [ ] **TTS Feedback:** Implement the Text-to-Speech call to voice the LLM's `BARK` output during FSM transitions.
+* [ ] **Pre-Cog Loop:** Script a background asynchronous query in Godot that fires during the `EXECUTING` state, generating "What-If" TOON responses for nearby hazards.
+* [ ] **Instant Interrupts:** Update the FSM `INTERRUPTED` state logic to check the unit's local cache for a valid contingency TOON before falling back to `PLANNING` and requesting a fresh inference.
+
 ---
 
-## 7. Success Criteria
+## 8. Success Criteria
 1.  **Architecture:** Commander strictly issues high-level orders; Operator handles 100% of frame-by-frame physics/navigation.
 2.  **Resilience:** System handles malformed LLM responses via the `CONFUSED` state without crashing.
 3.  **Adaptive Intelligence:** LLM identifies and avoids a previously "hidden" hazard after one unit reflects on it.
@@ -129,7 +151,7 @@ When working through the implementation, do not move onto the next step until th
 
 ---
 
-## 8. File Structure
+## 9. File Structure
 res://
 ├── assets/                       # Raw assets, no code here
 │   ├── sprites/
