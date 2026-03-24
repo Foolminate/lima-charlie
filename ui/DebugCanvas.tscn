@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://rlnieqsv7txq"]
+
+[ext_resource type="Theme" uid="uid://dk2c2t45lpce6" path="res://assets/default_theme.tres" id="1_b8qd8"]
+
+[node name="DebugCanvas" type="VBoxContainer" unique_id=107784389]
+
+[node name="StateLabel" type="Label" parent="." unique_id=597756155]
+layout_mode = 2
+theme = ExtResource("1_b8qd8")
+text = "[STATE: NONE]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExpectLabel" type="Label" parent="." unique_id=741682866]
+layout_mode = 2
+theme = ExtResource("1_b8qd8")
+text = "[EXPECT: N/A]"
+horizontal_alignment = 1
+vertical_alignment = 1

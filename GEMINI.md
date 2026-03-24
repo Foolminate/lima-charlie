@@ -1,8 +1,10 @@
-# Project: LIMA CHARLIE
-**Title:** LLM-Driven Tactical Overwatch Simulation
+# Project: LLM-Driven Tactical Overwatch Simulation
+**Title:** LIMA CHARLIE
 **Version:** 0.1
-**Focus:** Full Architecture, OODAR Logic, and Fault-Tolerant Execution
-**Description** A 2D, top-down, "Commandos-lite", prototype where the player provides high-level voice/text commands. An LLM acts as the "soldiers on the ground" interpreting intent, analyzing a semantic environmental report (SITREP), and executing movement/tactical actions within Godot.
+**Godot:** 4.6
+**Platform:** Windows
+**Focus:** Technical demonstration of LLM enabled, indirect-tactical-architecture
+**Description** A 2D, top-down, "Commandos-lite", prototype where the player provides high-level commands. An LLM acts as the "soldiers on the ground" interpreting intent, analyzing a semantic environmental report (SITREP), and executing movement/tactical actions within Godot.
 
 ---
 
@@ -11,10 +13,10 @@ The system is built on a strict decoupling of strategic intent and physical exec
 
 * **The Commander (LLM / Strategic Layer):**
     * **Role:** High-level squad leader managing one or more "Squads."
-    * **Unit of Command:** The **Squad** (defined as 1+ units sharing a single **Rally Point**).
+    * **Unit of Command:** The **Squad** (1+ units sharing a single **Rally Point**).
     * **Frequency:** Asynchronous events or player input.
     * **Context:** Operates on semantic data (strings/TOON) rather than raw world coordinates.
-    * **Responsibility:** Interpreting SITREPs, Orienting against mission goals known hazards, deciding on discrete actions (e.g., "Move to cover").
+    * **Responsibility:** Interpreting SITREPs, Orienting against mission goals and known hazards, deciding on discrete actions (e.g., "Move to cover").
     * **Decision Logic:** Commands are issued to the Squad's **Asset Pool** (e.g., "Use Sniper to cover Tank").
 * **The Operator (Godot Engine / Tactical Layer):**
     * **Role:** The physical unit, sensory organs, and execution engine.
@@ -70,7 +72,7 @@ Units are governed by a robust FSM that manages the transition between high-leve
 * **PLANNING:** Command sent to LLM; waiting for inference. Unit plays "Awaiting orders" idle animations.
 * **EXECUTING:** Active movement via `NavigationAgent2D`. High-frequency pathing.
 * **INTERRUPTED:** Emergency break. Triggered by taking damage or "Predictive Ray" hitting a hazard. Unit enters defensive posture, generates a `RESULT:Interrupted` SITREP, and enters PLANNING.
-* **CONFUSED (Graceful Failure):** Triggered by invalid TOON syntax, unreachable targets, or timeouts.
+* **CONFUSED (Graceful Failure):** Triggered by invalid TOON syntax, unreachable targets, missing skills, or timeouts.
     * **Logic:** Assume defensive posture/seek cover, await new orders, bark: "Instructions unclear, holding position." Generate `RESULT:Syntax_Error` SITREP.
 * **TRANSITION: FISSION:** Commander issues a `CMD` to a specific asset with a *new* Rally Point. The Unit detaches from the current Squad FSM and initializes its own.
 * **TRANSITION: FUSION:** Squads merge into a single SITREP entity when sharing the same Rally Point.
@@ -95,22 +97,24 @@ Units are governed by a robust FSM that manages the transition between high-leve
 
 ---
 
-## 7. Comprehensive Development Roadmap (Revised for MVP Execution)
-When working through the implementation, do not move onto the next step until the current step is confirmed complete. Explain the steps in the editor in detail—do not assume deep editor knowledge.
+## 7. Comprehensive MVP Development Roadmap
+The MVP roadmap is strictly scoped to delivering a technical demonstration of the indirect-tactical-architecture.
+* **In Scope:** Validating the core OODAR loop, Godot-to-LLM TOON communication, basic FSM locomotion, primitive hazard perception, and the Voice-to-Intent pipeline.
+* **Out of Scope:** Production assets (art/audio), complex combat math, multi-floor pathfinding, and polished UI.
 
 ### Phase 1: Foundation & The Debug Layer
 *Goal: Establish the physical world and ensure we can see what the engine is thinking.*
-* [ ] **Map Setup:** Create a basic 2D test arena with a `TileMap` (walls/cover) and a configured `NavigationRegion2D`.
-* [ ] **Unit Scene:** Build the base `TacticalObject` scene (Sprite, `NavigationAgent2D`, CollisionShape).
-* [ ] **Debug Canvas:** Implement an overlay UI that tracks and displays the active Unit's FSM State and their current `EXPECT` string.
+* [X] **Map Setup:** Create a basic 2D test arena with a `TileMap` (walls/cover) and a configured `NavigationRegion2D`.
+* [X] **Unit Scene:** Build the base `TacticalObject` scene (Sprite, `NavigationAgent2D`, CollisionShape).
+* [X] **Debug Canvas:** Implement an overlay UI that tracks and displays the active Unit's FSM State and their current `EXPECT` string.
 * [X] **Global Blackboard:** Create the autoload/singleton to store `register_intel` and global state.
 
 ### Phase 2: The Operator (FSM & Locomotion)
 *Goal: The unit can move and transition states based on hardcoded inputs.*
-* [ ] **State Machine:** Implement the core FSM (`IDLE`, `PLANNING`, `EXECUTING`, `INTERRUPTED`, `CONFUSED`).
-* [ ] **Navigation Logic:** Script the `NavigationAgent2D` to move to a clicked point on the map.
-* [ ] **State Transitions:** Wire the FSM so clicking a point triggers `EXECUTING`, and reaching the point triggers `IDLE`.
-* [ ] **Interrupts:** Add a dummy hazard to the map. If the unit collides/overlaps, force the `INTERRUPTED` state and halt movement.
+* [X] **State Machine:** Implement the core FSM (`IDLE`, `PLANNING`, `EXECUTING`, `INTERRUPTED`, `CONFUSED`).
+* [X] **Navigation Logic:** Script the `NavigationAgent2D` to move to a clicked point on the map.
+* [X] **State Transitions:** Wire the FSM so clicking a point triggers `EXECUTING`, and reaching the point triggers `IDLE`.
+* [X] **Interrupts:** Add a dummy hazard to the map. If the unit collides/overlaps, force the `INTERRUPTED` state and halt movement.
 
 ### Phase 3: Perception & TOON Generation
 *Goal: The unit can "see" the world and translate it into a TOON string.*
@@ -187,3 +191,8 @@ res://
 │   └── api_client.gd             # Phase 5 HTTPRequest node for Ollama/LM Studio
 └── ui/                           # Player interfaces and debugging tools
     └── debug_canvas.tscn         # Overlay tracking FSM states and EXPECT strings
+
+
+Note the current roadmap progress and help continue with the implementation. Do not assume I have a comprehensive understanding of the Godot editor. Instead, provide detailed explanations of which settings to change and where to find them.
+Do not progress from one step to the next unless explicitly instructed to do so.
+Ensure instructions are relevant to the new editor layout for Godot version 4.6x.

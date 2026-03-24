@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://b8ag4tlh1rnuc"]
+
+[ext_resource type="Script" uid="uid://dod74pxvx6dp7" path="res://entities/units/tactical_unit.gd" id="1_jehbu"]
+[ext_resource type="Texture2D" uid="uid://qn2ctgfq4u45" path="res://assets/sprites/ic--baseline-navigation.png" id="2_jehbu"]
+[ext_resource type="PackedScene" uid="uid://rlnieqsv7txq" path="res://ui/DebugCanvas.tscn" id="3_eat3e"]
+[ext_resource type="Script" uid="uid://crl1klr74d7s8" path="res://entities/units/unit_fsm.gd" id="4_bk46h"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bk46h"]
+
+[node name="TacticalUnit" type="CharacterBody2D" unique_id=1209163275]
+z_index = 1
+script = ExtResource("1_jehbu")
+
+[node name="UnitFSM" type="Node" parent="." unique_id=803969593]
+script = ExtResource("4_bk46h")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1495224705]
+texture = ExtResource("2_jehbu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2138185937]
+position = Vector2(-2, 0)
+shape = SubResource("CircleShape2D_bk46h")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1822194147]
+avoidance_enabled = true
+
+[node name="DebugCanvas" parent="." unique_id=107784389 instance=ExtResource("3_eat3e")]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -35.5
+offset_top = -48.0
+offset_right = 35.5
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
