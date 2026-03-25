@@ -1,7 +1,7 @@
 # Project: LLM-Driven Tactical Overwatch Simulation
 **Title:** LIMA CHARLIE
 **Version:** 0.1
-**Godot:** 4.6
+**Godot:** 4.6x
 **Platform:** Windows
 **Focus:** Technical demonstration of LLM enabled, indirect-tactical-architecture
 **Description** A 2D, top-down, "Commandos-lite", prototype where the player provides high-level commands. An LLM acts as the "soldiers on the ground" interpreting intent, analyzing a semantic environmental report (SITREP), and executing movement/tactical actions within Godot.
@@ -35,7 +35,7 @@ This pipeline governs the translation of unpredictable player input into the str
 3. **Tactical Orientation:** Godot's Operator layer merges `PLAYER_INTENT` with the active FSM state and local visibility to compile the standard `SITREP` TOON.
 4. **Inference (The Commander):** The primary LLM ingests the `SITREP`, orienting the player's goal against ROE and physical map constraints.
 5. **Execution & Immersion:** The LLM returns the standard TOON string (`CMD`, `EXPECT`, `BARK`). Godot transitions the Operator to `EXECUTING`, while simultaneously routing the `BARK` string to a TTS (Text-to-Speech) engine for real-time auditory confirmation.
-6. **Speculative Contingency (Pre-Cog Loop):** While the physical unit is busy navigating/executing, Godot silently dispatches a background "What-If" prompt to the LLM based on detected but un-triggered environmental data (e.g., "Contingency if enemy spotted at 12_OCLOCK").
+6. **Speculative Contingency (Pre-Cog Loop):** While the physical unit is busy navigating/executing, Godot silently dispatches a background "What-If" prompt to the LLM based on detected but un-triggered environmental data (e.g., "Contingency if enemy spotted at N").
 7. **Cache & Sleep:** The LLM returns a contingency TOON. Godot stores this locally on the unit. If the unit's sensors subsequently trigger that exact scenario, the FSM instantly executes the cached TOON—completely bypassing inference latency—and *then* issues a fresh `SITREP` to realign the sleeping Commander.
 
 ---
@@ -56,11 +56,11 @@ All communication between Commander and Operator uses a delimited shorthand to m
 
 * **SITREP (Inbound to LLM):**
     * `SQUAD:[ID|State]  @[Zone] RALLY:[Point_A] ASSETS:[Sniper, Tank, Medic]`
-    * `VIS:[ObjID(Dist,Clock,Type,Status)]`
+    * `VIS:[ObjID(Dist,Dir,Type,Status)]`
     * `RESULT:[Success/Interrupt_Reason] (PREV_EXPECT:"[String from last CMD]")`
 * **CommandString (Outbound to Godot):**
     * `CMD:[Action] SKILL:[Unit/All ability] TGT:[ObjID/Semantic_Vector] EXPECT:[Hypothesis] BARK:[Voice]`
-      * *Targeting Note:* The LLM must NEVER output raw map coordinates. `Semantic_Vector` must be a known engine-parsed string (e.g., `DIR:12_OCLOCK_10M` or `NODE:Alpha`).
+      * *Targeting Note:* The LLM must NEVER output raw map coordinates. `Semantic_Vector` must be a known engine-parsed string (e.g., `DIR:N_10M` or `NODE:Alpha`).
     * *Example:* `CMD:FLANK_LEFT SKILL:[Tank_Bounding_Overwatch] EXPECT:"Squad reaches Point_A without casualties" BARK:Tank_ID support by fire! Squad flank left, danger close!`
 
 ---
@@ -83,8 +83,8 @@ Units are governed by a robust FSM that manages the transition between high-leve
 ## 6. Perception, Memory, and Validation
 
 ### A. The Perception Engine
-* **Spatial Mapping:** Translates coordinates into a relative 12-hour clock face based on Global North or Unit Forward.
-* **Global Blackboard:** A shared data-store. If Unit A sees a tripwire, Unit B’s next SITREP includes it in `THREAT_UPDATE`, even if Unit B cannot see it.
+* **Spatial Mapping:** Translates relative coordinates into one of eight cardinal directions (e.g., `BARK:Contact east of my position!`).
+* **Global Blackboard:** A shared data-store. If Unit A sees a tripwire, Unit B’s next SITREP includes it in `THREAT_UPDATE`, even if Unit B cannot see it. A bark from the detecting unit gives the illusion of efficient communication.
 * **Temporal Memory:** The `GlobalBlackboard` tracks `LastKnownPos` for enemies that have moved out of LOS.
 
 ### B. The Validation Gatekeeper
@@ -99,8 +99,9 @@ Units are governed by a robust FSM that manages the transition between high-leve
 
 ## 7. Comprehensive MVP Development Roadmap
 The MVP roadmap is strictly scoped to delivering a technical demonstration of the indirect-tactical-architecture.
-* **In Scope:** Validating the core OODAR loop, Godot-to-LLM TOON communication, basic FSM locomotion, primitive hazard perception, and the Voice-to-Intent pipeline.
-* **Out of Scope:** Production assets (art/audio), complex combat math, multi-floor pathfinding, and polished UI.
+* **In Scope:** Validating the voice-to-Intent pipeline, core OODAR loop, Godot-to-LLM TOON communication, basic FSM locomotion, and primitive hazard perception.
+* **Out of Scope:** Production assets (art/audio), complex combat simulation math, multi-floor pathfinding, and polished UI.
+* **Scope Capture:** Where important, but out of scope, features are identified, they are added to the roadmap for future development.
 
 ### Phase 1: Foundation & The Debug Layer
 *Goal: Establish the physical world and ensure we can see what the engine is thinking.*
@@ -118,9 +119,9 @@ The MVP roadmap is strictly scoped to delivering a technical demonstration of th
 
 ### Phase 3: Perception & TOON Generation
 *Goal: The unit can "see" the world and translate it into a TOON string.*
-* [ ] **Radial Scanner:** Implement `RayCast2D` or `Area2D` logic to detect hazards/enemies within line of sight. Visualized these with debug drawing.
-* [ ] **Clock-face Math:** Write the helper function to translate global coordinates of detected objects into relative 12-hour clock directions.
-* [ ] **SITREP Compiler:** Write the function that aggregates FSM state, Radial Scanner data, and the `RESULT` of the last action into the formatted `SITREP` TOON string. Output this string to the Debug Canvas.
+* [X] **Radial Scanner:** Implement `RayCast2D` or `Area2D` logic to detect hazards/enemies within line of sight. Visualized these with debug drawing.
+* [X] **Compass Math:** Write the helper function to translate global coordinates of detected objects into absolute 8-way cardinal directions.
+* [X] **SITREP Compiler:** Write the function that aggregates FSM state, Radial Scanner data, and the `RESULT` of the last action into the formatted `SITREP` TOON string.
 
 ### Phase 4: The Bridge (Parsing & Mocking)
 *Goal: Godot can send a SITREP, receive a CommandString, and parse it into an FSM action.*
@@ -135,6 +136,7 @@ The MVP roadmap is strictly scoped to delivering a technical demonstration of th
 * [ ] **System Prompting:** Draft and inject the initial System Prompt defining the Commander persona, ROE, and TOON output constraints.
 * [ ] **Live Testing:** Point Godot's `HTTPRequest` to the LLM API instead of the mock server.
 * [ ] **Tuning:** Refine the prompt to reduce latency, fix formatting hallucinations, and handle edge cases where the LLM gets "stuck."
+* [ ] **Cloud API:** Connect to a cloud model, interacting with refined prompts.
 
 ### Phase 6: The Command Pipeline (Input & Latency Masking)
 *Goal: Connect the player's voice to the tactical layer and implement speculative contingency caching.*
@@ -144,6 +146,19 @@ The MVP roadmap is strictly scoped to delivering a technical demonstration of th
 * [ ] **TTS Feedback:** Implement the Text-to-Speech call to voice the LLM's `BARK` output during FSM transitions.
 * [ ] **Pre-Cog Loop:** Script a background asynchronous query in Godot that fires during the `EXECUTING` state, generating "What-If" TOON responses for nearby hazards.
 * [ ] **Instant Interrupts:** Update the FSM `INTERRUPTED` state logic to check the unit's local cache for a valid contingency TOON before falling back to `PLANNING` and requesting a fresh inference.
+
+### Unplanned Features, Directions, and projects
+*Goal: Capture meaningful features for future development.*
+* [ ] **Token Optimization:** Create an automated testing pipeline for different TOON encoding strategies, selecting the best strategy for a given model.
+* [ ] **The Lone Wolf:** Create a singplayer, single squad member level, simulating a Snake/Otacon or Sam Fisher/Irving relationship.
+* [ ] **The Hive Mind:** Leverage a Multi-Agent System for individual squad-member inference, creating more dynamic, emergent, and possibly chaotic behavior.
+* [ ] **Nav-Graph:** Dynamically generate level graphs detailing important game-world elements for an LLM to strategize with.
+* [ ] **The Battlefield:** Large scale battles with numerous players and Bring-Your-Own-Brain client side LLM APIs pursue shared/conflicting objectives.
+* [ ] **After Action Review:** The model processes the mission log, creating a detailed after action review of mission performance to assess strengths and weaknesses.
+* [ ] **Generated Missions:** Levels, missions, objectives, and obstacles are generated, maximising replayability.
+* [ ] **Mobile Development:** Implement a mobile-first or parallel experience, likely reliant on cloud APIs.
+* [ ] **Collaborative Mission Planning:** Converse with the "commander" to plan a mission from start-to-finish.
+* [ ] **Destructable Environments:** Maximise problem solving creativity with deformable environments.
 
 ---
 
@@ -168,7 +183,7 @@ res://
 │   │   ├── unit.tscn             # Base scene (Sprite, NavAgent2D, RayCasts)
 │   │   ├── unit_root.gd          # Main script routing signals between components
 │   │   ├── unit_fsm.gd           # Manages IDLE, PLANNING, EXECUTING, etc.
-│   │   ├── perception.gd         # Handles Radial Scanning and clock-face math
+│   │   ├── perception.gd         # Handles Radial Scanning and compass math
 │   │   └── variants/             # Specific asset configurations
 │   │   	└── infantry.tscn     # Inherits unit.tscn (standard movement)
 │   │   	└── tank.tscn         # Inherits unit.tscn (larger collision, different performance/skills)
@@ -194,5 +209,6 @@ res://
 
 
 Note the current roadmap progress and help continue with the implementation. Do not assume I have a comprehensive understanding of the Godot editor. Instead, provide detailed explanations of which settings to change and where to find them.
+Do not propose any code unless explicitly instructed to do so.
 Do not progress from one step to the next unless explicitly instructed to do so.
 Ensure instructions are relevant to the new editor layout for Godot version 4.6x.

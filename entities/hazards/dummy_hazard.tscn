@@ -9,7 +9,12 @@ size = Vector2(128, 5)
 script = ExtResource("1_6pnc5")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=71639842]
+collision_layer = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=2030734105]
 shape = SubResource("RectangleShape2D_flgro")
-debug_color = Color(1, 0, 0, 0.41960785)
+
+[node name="Line2D" type="Line2D" parent="." unique_id=1281111263]
+points = PackedVector2Array(-64, 0, 64, 0)
+width = 2.0
+default_color = Color(1, 0, 0, 0.22352941)

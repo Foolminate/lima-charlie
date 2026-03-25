@@ -4,8 +4,12 @@
 [ext_resource type="Texture2D" uid="uid://qn2ctgfq4u45" path="res://assets/sprites/ic--baseline-navigation.png" id="2_jehbu"]
 [ext_resource type="PackedScene" uid="uid://rlnieqsv7txq" path="res://ui/DebugCanvas.tscn" id="3_eat3e"]
 [ext_resource type="Script" uid="uid://crl1klr74d7s8" path="res://entities/units/unit_fsm.gd" id="4_bk46h"]
+[ext_resource type="Script" uid="uid://yuyr67jqoauq" path="res://entities/units/perception.gd" id="5_qgnl2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bk46h"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_y5poc"]
+radius = 300.0
 
 [node name="TacticalUnit" type="CharacterBody2D" unique_id=1209163275]
 z_index = 1
@@ -36,3 +40,13 @@ offset_right = 35.5
 offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
+
+[node name="Perception" type="Area2D" parent="." unique_id=211711293]
+z_index = -1
+collision_layer = 0
+collision_mask = 6
+monitorable = false
+script = ExtResource("5_qgnl2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Perception" unique_id=698526045]
+shape = SubResource("CircleShape2D_y5poc")
