@@ -21,13 +21,21 @@ func _on_body_exited(body: Node2D) -> void:
 	detected_entities.erase(body)
 
 func _on_area_entered(area: Area2D) -> void:
-	var dir: String = get_cardinal_direction(area.global_position)
+	var dir: String = get_semantic_vector(area.global_position)
 	print("PERCEPTION: Detected %s at %s" % [area.name, dir])
-	detected_entities.append(area)
-	print(Sitrep.compile(owner,owner.fsm.State.keys()[owner.fsm.current_state], "Success", "Reach destination undetected"))
+	# detected_entities.append(area)
+	GlobalBlackboard.register_intel(area.owner)
+	print(Sitrep.compile(owner))
 
 func _on_area_exited(area: Area2D) -> void:
-	detected_entities.erase(area)
+	# detected_entities.erase(area)
+	GlobalBlackboard.persist_intel(area.owner)
+
+func get_semantic_vector(target_global_pos: Vector2) -> String:
+	var dir: String = get_cardinal_direction(target_global_pos)
+	var dist_pixels: float = owner.global_position.distance_to(target_global_pos)
+	var dist_meters: int = int(dist_pixels / 30.0) # Assuming 30 pixels = 1 meter
+	return "%s_%dm" % [dir, dist_meters]
 
 func get_cardinal_direction(target_global_pos: Vector2) -> String:
 	var angle: float = global_position.direction_to(target_global_pos).angle()

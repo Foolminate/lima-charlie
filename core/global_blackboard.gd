@@ -2,6 +2,24 @@ extends Node
 
 # A reference to global game state
 
+# Squads format:
+# {
+#   "id": {
+#     "members": Array[Node2D],
+#     "location": String,
+#     "rally_point": String,
+#     "last_objective": String,
+#     "objective_status": String,
+#     "current_objective": String,
+#     "objective_location": Vector2,
+#     "doctrine": String,
+#     "previous_command": String,
+#     "expectation": String,
+#     "outcome": String
+#   }
+# }
+var squads: Dictionary = {}
+
 # Stores known entities (Threats, POIs, Assets).
 # Format: { "entity_id": { "location": Vector2, "type": EntityType, "reporter": String } }
 var tactical_memory: Dictionary = {}
@@ -16,18 +34,32 @@ func update_objective(objective_id: String, status: String) -> void:
 	mission_objectives[objective_id] = status
 	objective_updated.emit(objective_id, status)
 
-func register_intel(entity_id: String, entity_type: Tactical.Entity, location: Vector2, reporter: String, importance: Tactical.Importance = Tactical.Importance.LOW) -> void:
-	tactical_memory[entity_id] = {
-		"location": location,
-		"type": entity_type,
-		"reporter": reporter,
-		"importance": importance,
-		"timestamp": Time.get_ticks_msec()
+func register_intel(entity: Node2D) -> void:
+	tactical_memory[entity.id] = {
+		"node_ref": weakref(entity),
+		"is_visible": true,
+		"type": entity.type,
+		"status": "",
+		"last_tags": "",
+		"last_position": Vector2.ZERO,
+		"intel_seen": 0.0,
 	}
-	intel_updated.emit(entity_id, entity_type, location, reporter)
+
+	intel_updated.emit(entity.id)
+
+func persist_intel(entity) -> void:
+	var entity_id: String = entity.id
+	var memory = tactical_memory.get(entity_id, null)
+	if memory == null: return
+
+	memory["is_visible"] = false
+	memory["status"] = entity.status
+	memory["last_tags"] = entity.get_tags()
+	memory["last_position"] = entity.global_position
+	memory["intel_seen"] = Time.get_ticks_msec()
 
 # Called before compiling a SITREP, minimises TOON tokens by removing stale or low-importance intelligence.
-func prune_stale_memory(max_base_age_msec: int) -> void:
+func prune_stale_memory(max_base_age_msec: int = 300_000) -> void:
 	var current_time = Time.get_ticks_msec()
 	var keys_to_remove = []
 

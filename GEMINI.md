@@ -66,7 +66,7 @@ All communication between Commander and Operator uses a delimited shorthand to m
    - HEALTH: Integer (0-100).
    - VECTOR: [Cardinal]_[Distance]M (e.g., NW_500M).
    - LOS: "Visible" or [Time]s (e.g., 10s) representing time since last contact.
-   - OBJ: Progress-tracking string. Active objectives contain goal vectors.
+   - OBJECTIVE: Progress-tracking string. Active objectives contain goal vectors.
 4. DESIGN DECISIONS:
    - Full-word Status (e.g., "Exposed") prioritized over codes to maintain semantic weight.
    - Objective vectors provide a spatial anchor for threat prioritization.
@@ -74,10 +74,10 @@ All communication between Commander and Operator uses a delimited shorthand to m
 
 **Example:**
 ```
-SQD:Alpha|RALLY:Point_A|POS:Yard
-OBJ:1.Infiltrate_Compound:SUCCESS|2.Defuse_Bomb:NW_500M|3.Extract_VIP
+SQUAD:Alpha|@Yard|RALLY:Point_A
+OBJECTIVE:1.Infiltrate_Compound:SUCCESS|2.Defuse_Bomb:NW_500M|3.Extract_VIP
 DOCTRINE:STEALTH|TACTICAL|ASSAULT|KEEP
-PREV:MOVE|EXPECT:"Reach Bomb"|RESULT:SUCCESS
+PREVIOUS:MOVE|EXPECT:"Reach Bomb"|RESULT:SUCCESS
 
 |ID| HEALTH | AMMO | STATUS | TAGS/SKILLS |
 |---|---|---|---|---|
@@ -132,7 +132,7 @@ BARK: Demo, get that charge neutralized. Tank, keep their heads down!
    - Mandates markdown tables for input (high data density, low token cost) and strict pipe-delimited syntax for output. XML-style tags (<COMMAND>) create hard anchors for Godot's Regex, allowing the engine to easily strip away any conversational drift.
 3. **Forced Chain-of-Thought**
    - Solves logic leaping and constraint amnesia, which are common in smaller, faster models.
-   - Forcing the LLM to articulate its evaluation of ROE (Rules of Engagement) and OBJ (Objectives) before writing the command syntax ensures the generated actions physically align with the strategic intent.
+   - Forcing the LLM to articulate its evaluation of ROE (Rules of Engagement) and OBJECTIVE before writing the command syntax ensures the generated actions physically align with the strategic intent.
 4. **Explicit Guardrails**
    - Mitigates the most common causes of parser failure, preventing CONFUSED states and expensive retries.
    - Uses absolute negative framing ("NEVER") to ban hallucinated IDs, raw coordinate outputs, and conversational filler. Small models respond better to hard, inflexible boundaries than soft suggestions.
@@ -158,7 +158,7 @@ STATIC_CONSTRAINTS: [Insert mission-specific hard rules, e.g., Civilian workers 
 
 <PROTOCOL_INBOUND>
 You will receive a SITREP formatted in Markdown tables.
-- META: Contains Squad ID, Rally Point, POS, Objectives (OBJ), DOCTRINE, and the PREV (previous command result).
+- META: Contains Squad ID, Rally Point, POS, OBJECTIVE, DOCTRINE, and the PREVIOUS (previous command result).
 - SQUAD TABLE: Lists your active units, their Health, Status, and available SKILLS (e.g., SKL:DISARM).
 - ENVIRONMENT TABLE: Lists visible entities, their status, TAGS (e.g., Hazard, Enemy, Cover), and their VECTOR.
   *CRITICAL NOTE:* VECTORS represent the distance from the TARGET to the *nearest* squad member. Use this to gauge immediate threat proximity.
@@ -175,7 +175,7 @@ The DOCTRINE key dictates the squad's operational stance, describing weapons con
 <PROTOCOL_OUTBOUND>
 You MUST output your response in exactly two blocks: <THOUGHT> and <COMMAND>.
 
-1. <THOUGHT>: A brief, 2-3 sentence internal monologue. You MUST evaluate the active OBJ, the current DOCTRINE (WCS/posture/signature), the MISSION_BRIEFING, and the immediate threats in the SITREP before deciding on an action.
+1. <THOUGHT>: A brief, 2-3 sentence internal monologue. You MUST evaluate the active OBJECTIVE, the current DOCTRINE (WCS/posture/signature), the MISSION_BRIEFING, and the immediate threats in the SITREP before deciding on an action.
 2. <COMMAND>: The strict, pipe-delimited output for the Operator engine.
 
 <COMMAND_SYNTAX>
@@ -213,10 +213,10 @@ BARK: [A short, in-character voice line from the Commander to the Squad]
 
 <ONE_SHOT_EXAMPLE>
 User:
-SQD:Alpha|RALLY:Point_A|POS:Yard
-OBJ:1.Infiltrate_Compound:SUCCESS|2.Defuse_Bomb:NW_500M|3.Extract_VIP
+SQUAD:Alpha|@Yard|RALLY:Point_A
+OBJECTIVE:1.Infiltrate_Compound:SUCCESS|2.Defuse_Bomb:NW_500M|3.Extract_VIP
 DOCTRINE:STEALTH
-PREV:MOVE|EXPECT:"Approach the objective without breaking stealth"|RESULT:SUCCESS
+PREVIOUS:MOVE|EXPECT:"Approach the objective without breaking stealth"|RESULT:SUCCESS
 
 | ID | HEALTH | AMMO | STATUS | TAGS/SKILLS |
 |---|---|---|---|---|
@@ -231,7 +231,7 @@ PREV:MOVE|EXPECT:"Approach the objective without breaking stealth"|RESULT:SUCCES
 
 Assistant:
 <THOUGHT>
-The PREV movement was successful. Objective 2 is to defuse the bomb. We have direct LOS on bomb_1, which is only 5M from a squad member. Doctrine is STEALTH, so we must avoid engaging patrol_1. I will issue a unified squad command to disarm the bomb. The Operator will automatically assign the unit with SKL:DISARM to the task, while the rest of the squad establishes a stealth perimeter.
+The PREVIOUS movement was successful. Objective 2 is to defuse the bomb. We have direct LOS on bomb_1, which is only 5M from a squad member. Doctrine is STEALTH, so we must avoid engaging patrol_1. I will issue a unified squad command to disarm the bomb. The Operator will automatically assign the unit with SKL:DISARM to the task, while the rest of the squad establishes a stealth perimeter.
 </THOUGHT>
 <COMMAND>
 UNIT: ALL | ACTION: SKILL | TARGET: bomb_1 | SKILL: DISARM | DOCTRINE: KEEP

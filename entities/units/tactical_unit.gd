@@ -1,5 +1,10 @@
 extends CharacterBody2D
 
+@export var id: String = "viper_1"
+@export var squad: String = "ALPHA"
+@export var type: String = "TacticalUnit"
+@export var health: int = 100
+@export var tags: String = "Rifleman, Stealth, SKL:DISARM"
 @export var movement_speed: float = 150.0
 
 @onready var sprite: Sprite2D = $Sprite2D
@@ -7,10 +12,47 @@ extends CharacterBody2D
 @onready var state_label: Label = $DebugCanvas/StateLabel
 @onready var expect_label: Label = $DebugCanvas/ExpectLabel
 @onready var fsm: UnitFSM = $UnitFSM
-
+# {
+#   "squad_id": {
+#     "members": Array[Node2D],
+#     "location": String,
+#     "rally_point": String,
+#     "last_objective": String,
+#     "objective_status": String,
+#     "current_objective": String,
+#     "objective_location": Vector2,
+#     "doctrine": String,
+#     "previous_command": String,
+#     "expectation": String,
+#     "outcome": String
+#   }
+# }
 func _ready() -> void:
 	call_deferred("_actor_setup")
 	fsm.state_changed.connect(_on_state_changed)
+	var squad_data: Variant = GlobalBlackboard.squads.get(squad, null)
+
+	if squad_data != null:
+		squad_data["members"].append(self)
+		return
+
+	# TODO: create an object for this nonsense.
+	squad_data = {
+		"members": [self],
+		"location": "Sector_7",
+		"rally_point": "Point_A",
+		"last_objective": "Infiltrate_Compound",
+		"objective_status": "SUCCESS",
+		"current_objective": "Defuse_Bomb",
+		"objective_location": Vector2(500, -200),
+		"next_objective": "Extract_VIP",
+		"doctrine": "STEALTH",
+		"previous_command": "MOVE",
+		"expectation": "Approach the objective without breaking stealth",
+		"outcome": "SUCCESS",
+	}
+
+	GlobalBlackboard.squads[squad] = squad_data
 
 func _physics_process(_delta: float) -> void:
 	# Stop if we've reached the target
@@ -38,6 +80,9 @@ func trigger_hazard(hazard: Node) -> void:
 	if fsm.current_state == fsm.State.EXECUTING:
 		fsm.change_state(fsm.State.INTERRUPTED)
 		nav_agent.target_position = global_position
+
+func get_status() -> String:
+	return fsm.State.keys()[fsm.current_state]
 
 func _actor_setup() -> void:
 	# Wait for the NavigationServer to sync.
