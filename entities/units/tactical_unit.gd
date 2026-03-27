@@ -12,21 +12,8 @@ extends CharacterBody2D
 @onready var state_label: Label = $DebugCanvas/StateLabel
 @onready var expect_label: Label = $DebugCanvas/ExpectLabel
 @onready var fsm: UnitFSM = $UnitFSM
-# {
-#   "squad_id": {
-#     "members": Array[Node2D],
-#     "location": String,
-#     "rally_point": String,
-#     "last_objective": String,
-#     "objective_status": String,
-#     "current_objective": String,
-#     "objective_location": Vector2,
-#     "doctrine": String,
-#     "previous_command": String,
-#     "expectation": String,
-#     "outcome": String
-#   }
-# }
+
+
 func _ready() -> void:
 	call_deferred("_actor_setup")
 	fsm.state_changed.connect(_on_state_changed)
@@ -36,7 +23,7 @@ func _ready() -> void:
 		squad_data["members"].append(self)
 		return
 
-	# TODO: create an object for this nonsense.
+	# TODO: create an object for this.
 	squad_data = {
 		"members": [self],
 		"location": "Sector_7",

@@ -319,7 +319,7 @@ The MVP roadmap is strictly scoped to delivering a technical demonstration of th
 
 ### Phase 4: The Bridge (Parsing & Mocking)
 *Goal: Godot can send a SITREP, receive a CommandString, and parse it into an FSM action.*
-* [ ] **TOON Parser (Godot):** Write the string manipulation logic to extract `COMMAND`, `TGT`, and `EXPECT` from an incoming string, specifically targeting text between `<COMMAND>` tags.
+* [X] **Command Parser (Godot):** Write the string manipulation logic to extract `COMMAND`, `TARGET`, and `EXPECT` from an incoming string, specifically targeting text between `<COMMAND>` tags.
 * [ ] **Validation Gatekeeper:** Ensure the FSM rejects malformed mock strings and enters `CONFUSED`.
 * [ ] **The Engine Mock:** Create a GDScript dummy function that accepts the SITREP, `awaits` a random 1.5 - 3.0 second timer (to simulate inference latency), and yields a hardcoded, perfectly formatted TOON string.
 * [ ] **Closing the Loop:** Godot generates SITREP -> Awaits Engine Mock -> Godot parses -> Unit Executes.
@@ -401,15 +401,48 @@ res://
 └── ui/                           # Player interfaces and debugging tools
     └── debug_canvas.tscn         # Overlay tracking FSM states and EXPECT strings
 
-Note the current roadmap progress and help continue with the implementation. Do not assume I have a comprehensive understanding of the Godot editor. Instead, provide detailed explanations of which settings to change and where to find them.
-
+Provide detailed explanations of how to implement and configure scenes in Godot. Do not assume I have a comprehensive understanding of the Godot editor.
 Do not propose any code unless explicitly instructed to do so.
 Ask about the design and confirm requirements. Do not flood the context window with code updates.
 Ask if we have finished a step before moving on. Do not progress from one step to the next unless explicitly instructed to do so.
 Ensure instructions are relevant to the new editor layout for Godot version 4.6x.
 
+We're getting into Phase 4, just finished the parser (below), let's keep going with the engine_mock.
 
-```
-PREVIOUS:MOVE|EXPECT:"Reach the objective"|RESULT:CONFUSED
-ERRORS: NO_BARK_ANCHOR | NO_SKILL | BAD_TARGET:'TARGET: bomb_1:active'
-```
+# Phase 4 Design Decisions & Engine Mock Architecture
+
+## 1. EngineMock Component (`engine_mock.gd`)
+* **Implementation Type:** A dedicated Node placed in the scene tree (likely a child of `test_arena.tscn` in the `llm_bridge` directory) to utilize Godot's built-in timers and signal connections.
+* **Input Handling:** Uses `_unhandled_input` to listen for number keys. Pressing a key immediately triggers the corresponding scenario (no two-step "prime and execute" required).
+* **SITREP Processing:** For this MVP stage, the mock blindly ignores the inbound SITREP data and outputs the triggered scenario.
+* **Latency Simulation:** Applies a randomized timer (1.5s - 3.0s) to mimic local LLM inference delays before emitting the `<COMMAND>` string.
+
+## 2. Testing Scenarios (Number Key Triggers)
+* **[1] Success:** Yields a fully valid, structurally perfect TOON block with all required keys, `EXPECT`, and `BARK`.
+* **[2] Syntax Error:** Yields a TOON block with intentional delimiter corruption (e.g., `TARGET:bomb:1` instead of `TARGET:bomb_1`) to test parser resilience.
+* **[3] Logic/Missing Error:** Yields a TOON block completely omitting a mandatory key (e.g., missing the `BARK:` anchor).
+
+## 3. The "Confused" Auto-Retry Loop
+* **Immediate Escalation:** If the `CommandParser` fails, the target transitions to `CONFUSED`. The system immediately (0.0s delay) fires a retry request back to the mock.
+* **Simulated Self-Correction:** When the mock receives this immediate retry request, it overrides the previous error state, generates a "Fixed" (Success) string, applies the standard simulated latency (1.5s - 3.0s), and returns the valid command to break the loop.
+* **Barks:** Explicit `CONFUSED` barks are deprioritized. The LLM's goal is to output a new, valid command rather than waste tokens generating a failure bark.
+
+## 4. Architectural Refinement: Squad-Centric Command
+* **The Hub:** The LLM issues one order *per squad*, not per unit. The Squad is the entity that transitions between `PLANNING` and `CONFUSED`.
+* **Delegation:** The Godot Operator layer receives the Squad order and delegates the micro-actions to the individual units.
+* **Fission & Fusion:** If a distinct unit is given a specific order, the engine splits it off into a new Squad with its own Rally Point. It can later be fused back.
+* **MVP Concession:** To test the pipeline without immediately building a complex Squad Manager node, the current single `TacticalUnit` acts as a "Squad of One" to validate the parser and FSM loop.
+
+
+### Thoughts
+*Do we need to be more explicit about what the player does?*
+The distinction between LLM-squad and Engine-unit control is ambiguous.
+- Update `COMMAND` to use `SQUAD` instead of `UNIT`
+- Add `DETACH` anchor to control squad fission
+  - How to manage objectives?
+  - Generate objective?
+  - How to determine if an objective is achieved and update the SITREP?
+  - What to do when all objectives are clear?
+    - Rejoin a squad?
+    - How to choose which squad to join?
+- Remove `SKILLS` from units, move to SITREP header.
