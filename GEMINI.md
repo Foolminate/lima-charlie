@@ -179,7 +179,7 @@ You MUST output your response in exactly two blocks: <THOUGHT> and <COMMAND>.
 2. <COMMAND>: The strict, pipe-delimited output for the Operator engine.
 
 <COMMAND_SYNTAX>
-Every line within the <COMMAND> block must follow this exact structure:
+Every ORDER within the <COMMAND> block must follow this exact structure:
 UNIT: [ALL or specific ID] | ACTION: [ACT] | TARGET: [TGT] | SKILL: [SKL] | DOCTRINE: [STEALTH/TACTICAL/ASSAULT/KEEP]
 
 Valid ACTIONS (Must be one of the following):
@@ -240,6 +240,22 @@ BARK: Squad, converge on the explosive. Get to work on that defusal and keep you
 </COMMAND>
 </ONE_SHOT_EXAMPLE>
 ```
+### D. Error Reflection (Self-Correction Loop)
+**Purpose:** To prevent the LLM from getting stuck in an infinite failure loop due to syntax errors, while minimizing the token cost of error reporting.
+* **Mechanism:** If the `command_parser.gd` detects data or syntax errors, the unit's FSM enters the `CONFUSED` state. The parser compiles an aggregated list of token-optimized error codes.
+* **Injection:** This error string is injected directly into the `META` block of the next cycle's `SITREP`, acting as a keyword trigger that forces the LLM to cross-reference its mistakes against the `<COMMAND_SYNTAX>` rules in the system prompt.
+
+**Token-Optimized Error Lexicon:**
+The lexicon prioritizes the semantic anchor `MISSING` to prevent the LLM from misinterpreting the error as a new tactical constraint (e.g., "NO_BARK" could be interpreted as a stealth directive).
+
+* `MISSING:[KEY_NAME]` (e.g., `MISSING:BARK`, `MISSING:TARGET`) - Triggered when a required anchor or KVP is omitted.
+* `SYNTAX:[RAW_STRING]` (e.g., `SYNTAX:TARGET:bomb:1`) - Triggered when a segment contains invalid delimiters (like multiple colons).
+* `NO_VALID_UNITS` - Triggered when the `<COMMAND>` block contains no parsed tactical instructions.
+
+**Example SITREP Injection:**
+If the LLM omits the BARK anchor and hallucinates a colon in a target ID, the next SITREP header will read:
+`PREVIOUS:MOVE|EXPECT:"Reach the objective"|RESULT:CONFUSED`
+`ERRORS: MISSING:BARK | SYNTAX:TARGET:bomb_1:active`
 
 ---
 
@@ -378,7 +394,7 @@ res://
 ├── levels/                       # World environments
 │   └── test_arena.tscn           # Phase 1 map with TileMap and NavigationRegion2D
 ├── llm_bridge/                   # The "Commander" layer and translation protocol
-│   ├── toon_parser.gd            # Regex/XML tag extractor and logic validator
+│   ├── command_parser.gd         # Regex/XML tag extractor and logic validator
 │   ├── sitrep_compiler.gd        # Formats FSM + Perception data into TOON strings
 │   ├── engine_mock.gd            # Phase 4 async mock coroutine (replaces mock server)
 │   └── api_client.gd             # Phase 5 HTTPRequest node for Ollama/LM Studio
@@ -386,6 +402,14 @@ res://
     └── debug_canvas.tscn         # Overlay tracking FSM states and EXPECT strings
 
 Note the current roadmap progress and help continue with the implementation. Do not assume I have a comprehensive understanding of the Godot editor. Instead, provide detailed explanations of which settings to change and where to find them.
+
 Do not propose any code unless explicitly instructed to do so.
-Do not progress from one step to the next unless explicitly instructed to do so.
+Ask about the design and confirm requirements. Do not flood the context window with code updates.
+Ask if we have finished a step before moving on. Do not progress from one step to the next unless explicitly instructed to do so.
 Ensure instructions are relevant to the new editor layout for Godot version 4.6x.
+
+
+```
+PREVIOUS:MOVE|EXPECT:"Reach the objective"|RESULT:CONFUSED
+ERRORS: NO_BARK_ANCHOR | NO_SKILL | BAD_TARGET:'TARGET: bomb_1:active'
+```
